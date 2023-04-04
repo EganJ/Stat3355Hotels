@@ -1,5 +1,5 @@
 require(dplyr)
-
+#hello world
 get_cleaned_bookings <- function() {
   # Cleaning columns in order they appear in auto-complete in RStudio. 
   # Referencing the original dataset source for column details:
