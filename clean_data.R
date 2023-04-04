@@ -1,5 +1,6 @@
 require(dplyr)
-#hello world
+
+
 get_cleaned_bookings <- function() {
   # Cleaning columns in order they appear in auto-complete in RStudio. 
   # Referencing the original dataset source for column details:
@@ -115,4 +116,15 @@ get_cleaned_bookings <- function() {
   
   return(bookings)
 }
+
+
+get_cleaned_reservation <- function(){ 
+  
+  # Reservations representing Dataset Provided by professor 
+  reservations <- read.csv("hotel_reservations.csv")
+  
+  
+  
+  
+  return (reservations)}
 
