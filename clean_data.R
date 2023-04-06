@@ -118,12 +118,19 @@ get_cleaned_bookings <- function() {
 }
 
 
-get_cleaned_reservation <- function(){ 
+get_cleaned_reservations <- function(){ 
   
   # Reservations representing Dataset Provided by professor 
   reservations <- read.csv("hotel_reservations.csv")
   
+  # 7 meal types. Putting them into a factor variable rather than character 
+  reservations$room_type_reserved <- factor(reservations$room_type_reserved)
   
+  # 3 meal plans and not selected. 0 is "not selected"
+  reservations$type_of_meal_plan <- factor(reservations$type_of_meal_plan)
+  levels(reservations$type_of_meal_plan) <- c(1, 2, 3, 0)
+  
+  reservations$arrival_month <- factor(reservations$arrival_month)
   
   
   return (reservations)}

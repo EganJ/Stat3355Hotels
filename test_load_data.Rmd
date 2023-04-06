@@ -11,3 +11,24 @@ Load the necessary functions:
 ```{r}
   get_cleaned_bookings()
 ```
+
+
+
+```{r}
+
+get_cleaned_reservations()
+
+
+# subsetting data for avg room price and cancellation status
+
+room_vs_cancellation <- data.frame(reservations$arrival_month, reservations$booking_status, reservations$avg_price_per_room)
+
+
+
+library(tidyverse)
+
+ggplot(room_vs_cancellation, aes(reservations$arrival_month,reservations$avg_price_per_room, fill = reservations$booking_status)) + geom_bar(position = "stack", stat = "identity") 
+
+
+
+```
