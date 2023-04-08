@@ -16,7 +16,7 @@ Load the necessary functions:
 
 ```{r}
 
-get_cleaned_reservations()
+reservations <- get_cleaned_reservations()
 
 
 # subsetting data for avg room price and cancellation status
