@@ -132,8 +132,11 @@ get_cleaned_reservations <- function(){
   
   reservations$arrival_month <- factor(reservations$arrival_month)
   
+  # Convenience columns
   reservations$arrival_date_full <- as.Date(with(reservations,
     paste(arrival_year, arrival_month, arrival_date,sep="-")),"%Y-%m-%d")
+  reservations$total_nights <- reservations$no_of_week_nights + reservations$no_of_weekend_nights
+  
   
   return (reservations)}
 

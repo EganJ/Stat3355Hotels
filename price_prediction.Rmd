@@ -38,8 +38,10 @@ might suppose that the type of room booked would heavily impact the average pric
 
 
 ```{r}
-  ggplot(data = reservations, mapping = aes(x = avg_price_per_room, y = room_type_reserved)) +
-    geom_violin(fill = "darkorange") +
+  ggplot(data = reservations, mapping = aes(x = avg_price_per_room,
+                                            y = room_type_reserved,
+                                            fill = room_type_reserved)) +
+    geom_violin() +
     geom_boxplot(alpha = 0) +
     ggtitle("Average Price by Room Type") +
     xlab("Average Nightly Price") +
@@ -53,9 +55,30 @@ on room type would show poor results.
 We also see a few outliers, which will be removed- we aren't trying to catch
 every data point.
 ```{r}
-  # TODO: better outlier prediction than me eyeballing the graph. By factor
-  # would be nice too.
-  reservations <- subset(reservations, reservations$avg_price_per_room < 340)
+  removed_outliers <- data.frame()
+  for (room_type in levels(reservations$room_type_reserved)){
+    room_data <- subset(reservations, room_type_reserved == room_type)
+    lower = mean(room_data$avg_price_per_room) - 1.5 * IQR(room_data$avg_price_per_room)
+    upper = mean(room_data$avg_price_per_room) + 1.5 * IQR(room_data$avg_price_per_room)
+    room_data <- subset(room_data, avg_price_per_room < upper & avg_price_per_room > lower)
+    removed_outliers <- rbind(removed_outliers, room_data)
+  }
+  reservations <- removed_outliers
+```
+
+With the outliers removed, this is what the dataset looks like. **Note that
+for some of the populations, a number of observations with prices around 0 have
+been dropped: we may be missing that case.**
+
+```{r}
+  ggplot(data = reservations, mapping = aes(x = avg_price_per_room,
+                                            y = room_type_reserved,
+                                            fill = room_type_reserved)) +
+    geom_violin() +
+    geom_boxplot(alpha = 0) +
+    ggtitle("Average Price by Room Type") +
+    xlab("Average Nightly Price") +
+    ylab("Room Type")
 ```
 
 ```{r}
@@ -106,4 +129,45 @@ be linear. Nevertheless, add it to the model.
   plot_model(model_with_time)
   summary(model_with_time)
 ```
+
+```{r}
+  ggplot(data = reservations,
+        mapping = aes(x = total_nights, y = avg_price_per_room, col = room_type_reserved)) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y~x)
+```
+Matters to some but not much to others.
+
+```{r}
+  model_with_duration <- lm(avg_price_per_room ~
+                         (room_type_reserved +
+                            no_of_adults +
+                            no_of_children +
+                            arrival_date_full +
+                            no_of_week_nights +
+                            no_of_weekend_nights +
+                            market_segment_type + 
+                            type_of_meal_plan + 
+                            no_of_special_requests + 
+                            lead_time +
+                            required_car_parking_space +
+                            no_of_previous_cancellations +
+                            booking_status),
+                        reservations)
+  plot_model(model_with_duration)
+  summary(model_with_duration)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
