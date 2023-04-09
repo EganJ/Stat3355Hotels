@@ -132,6 +132,8 @@ get_cleaned_reservations <- function(){
   
   reservations$arrival_month <- factor(reservations$arrival_month)
   
+  reservations$arrival_date_full <- as.Date(with(reservations,
+    paste(arrival_year, arrival_month, arrival_date,sep="-")),"%Y-%m-%d")
   
   return (reservations)}
 

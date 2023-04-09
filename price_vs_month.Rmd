@@ -1,5 +1,5 @@
 ---
-title: "Load Data"
+title: "Price vs Month"
 output: html_notebook
 ---
 

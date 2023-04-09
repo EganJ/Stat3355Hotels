@@ -1,0 +1,109 @@
+---
+title: "Price Prediction"
+output: html_notebook
+---
+
+```{r}
+  source("clean_data.R")
+  bookings <- get_cleaned_bookings()          # Supplementary data set
+  reservations <- get_cleaned_reservations()  # Primary data set
+  
+  library(ggplot2)
+```
+
+```{r}
+# Evaluation utilities for a model
+plot_model <- function(fit_model) {
+  predictions <- predict(fit_model, reservations)
+  # manually make the plot square
+  lower = min(min(predictions), min(reservations$avg_price_per_room))
+  upper = max(max(predictions), max(reservations$avg_price_per_room))
+  
+  ggplot() +
+    geom_point(mapping = aes(x = reservations$avg_price_per_room, 
+                             y = predictions,
+                             col = reservations$room_type_reserved)) +
+    geom_abline(slope = 1, intercept = 1) +
+    ggtitle("Predicted vs Actual prices") +
+    xlab("Actual Price") +
+    ylab("Predicted Price") +
+    coord_fixed(xlim = c(lower, upper), ylim = c(lower, upper)) +
+    theme(aspect.ratio = 1)
+}
+
+```
+
+In this document we look to build a regression model for the average price. We 
+might suppose that the type of room booked would heavily impact the average price:
+
+
+```{r}
+  ggplot(data = reservations, mapping = aes(x = avg_price_per_room, y = room_type_reserved)) +
+    geom_violin(fill = "darkorange") +
+    geom_boxplot(alpha = 0) +
+    ggtitle("Average Price by Room Type") +
+    xlab("Average Nightly Price") +
+    ylab("Room Type")
+```
+
+We do see that the distribution of price by room time looks different. However,
+there is still a great deal of variance within each group, so predicting solely
+on room type would show poor results.
+
+We also see a few outliers, which will be removed- we aren't trying to catch
+every data point.
+```{r}
+  # TODO: better outlier prediction than me eyeballing the graph. By factor
+  # would be nice too.
+  reservations <- subset(reservations, reservations$avg_price_per_room < 340)
+```
+
+```{r}
+  room_type_model = lm(avg_price_per_room ~ room_type_reserved, reservations)
+  plot_model(room_type_model)
+  summary(room_type_model)
+```
+
+Prior knowledge of hotels might also suggest that the number of people would 
+affect price, with adults and children possibly being priced separately.
+
+```{r}
+  ggplot(data = reservations, mapping = aes(x = no_of_adults, y = avg_price_per_room, col = room_type_reserved)) + 
+    geom_jitter() 
+
+  ggplot(data = reservations, mapping = aes(x = no_of_children, y = avg_price_per_room, col = room_type_reserved)) + 
+    geom_jitter()
+```
+We see that this question is not fully independent of asking the room type- for
+instance, children-only reservations use almost exclusively room type 2- but there
+is enough of a shift even accounting for room type to justify adding the number
+of participants to the model.
+
+```{r}
+  people_and_room_model <- lm(avg_price_per_room ~ (room_type_reserved + 
+    no_of_adults + no_of_children), reservations)
+  plot_model(people_and_room_model)
+  summary(people_and_room_model)
+```
+Visually better. (TODO: implement metrics like MSE). 
+
+Our data was taken over a duration, during which hotel prices may have shifted.
+```{r}
+  ggplot(data = reservations, mapping = aes(x = arrival_date_full,
+                                            y = avg_price_per_room,
+                                            col = room_type_reserved)) +
+    geom_point() +
+    geom_smooth(method="lm", formula = y~x)
+```
+
+Price is clearly time-dependent, although the relationship may not strictly speaking
+be linear. Nevertheless, add it to the model.
+
+```{r}
+  model_with_time <- lm(avg_price_per_room ~
+                         (room_type_reserved + no_of_adults + no_of_children + arrival_date_full),
+                        reservations)
+  plot_model(model_with_time)
+  summary(model_with_time)
+```
+
