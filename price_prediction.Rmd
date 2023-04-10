@@ -8,21 +8,52 @@ output: html_notebook
   bookings <- get_cleaned_bookings()          # Supplementary data set
   reservations <- get_cleaned_reservations()  # Primary data set
   
+  reservations$order <- rownames(reservations) # for reconstruction after subsetting
   library(ggplot2)
 ```
 
 ```{r}
-# Evaluation utilities for a model
-plot_model <- function(fit_model) {
-  predictions <- predict(fit_model, reservations)
-  # manually make the plot square
-  lower = min(min(predictions), min(reservations$avg_price_per_room))
-  upper = max(max(predictions), max(reservations$avg_price_per_room))
+# Fitting / Predicting split by room type. Implementation is not very r-like
+# but hey, on a schedule.
+
+fit_models <- function(formula) {
+  rooms <- levels(reservations$room_type_reserved)
+  models <- vector("list", length(rooms))
+  names(models) <- rooms
   
-  ggplot() +
-    geom_point(mapping = aes(x = reservations$avg_price_per_room, 
-                             y = predictions,
-                             col = reservations$room_type_reserved)) +
+  for(room in rooms) {
+    data <- subset(reservations, room_type_reserved == room)
+    models[[room]] <- lm(formula, data)
+  }
+  return(models)
+}
+
+make_predictions <- function(models, pop = reservations) {
+  predicted_price <- seq_len(nrow(pop))
+  predictions <- data.frame()
+  for(room_type in levels(pop$room_type)){
+    model <- models[[room_type]]
+    data <- subset(pop, room_type_reserved == room_type)
+    data$predicted_price <- predict(model, data)
+    predictions <- rbind(predictions, data)
+  }
+  return(predictions[order(predictions$order), ])
+}
+```
+
+
+```{r}
+# Evaluation utilities for a model
+plot_model <- function(fit_models, pop = reservations) {
+  predictions <- make_predictions(fit_models, pop)
+  # manually make the plot square
+  lower = min(min(predictions$predicted_price), min(predictions$avg_price_per_room))
+  upper = max(max(predictions$predicted_price), max(predictions$avg_price_per_room))
+  
+  ggplot(predictions[sample(nrow(predictions)), ]) +
+    geom_point(mapping = aes(x = avg_price_per_room, 
+                             y = predicted_price,
+                             col = room_type_reserved)) +
     geom_abline(slope = 1, intercept = 1) +
     ggtitle("Predicted vs Actual prices") +
     xlab("Actual Price") +
@@ -81,11 +112,32 @@ been dropped: we may be missing that case.**
     ylab("Room Type")
 ```
 
+Since the populations look so different we will be fitting a linear model to each
+group independently. This is further justified when we look at the behaviors for
+some of the variables like number of nights stayed:
+
 ```{r}
-  room_type_model = lm(avg_price_per_room ~ room_type_reserved, reservations)
-  plot_model(room_type_model)
-  summary(room_type_model)
+  ggplot(data = reservations,
+        mapping = aes(x = total_nights, y = avg_price_per_room, col = room_type_reserved)) +
+    geom_point() +
+    geom_smooth(method = "lm", formula = y~x) +
+    ggtitle("Average Price by Nights Stayed") +
+    ylab("Average Price per Room") + 
+    xlab("Total Nights (Weekend + Week)")
 ```
+The relationship of total nights stayed to the average price is different: 
+for groups 3 and 7, longer stays cost more, but the other groups are largely 
+unnafected.
+
+```{r}
+  # janky special case for when we are fitting only on 
+  models_nights = fit_models(avg_price_per_room ~ 
+                                  (no_of_week_nights + no_of_weekend_nights))
+  plot_model(models_nights)
+  summaries <- lapply(models_nights, summary)
+  print(summaries)
+```
+
 
 Prior knowledge of hotels might also suggest that the number of people would 
 affect price, with adults and children possibly being priced separately.
@@ -102,72 +154,35 @@ instance, children-only reservations use almost exclusively room type 2- but the
 is enough of a shift even accounting for room type to justify adding the number
 of participants to the model.
 
-```{r}
-  people_and_room_model <- lm(avg_price_per_room ~ (room_type_reserved + 
-    no_of_adults + no_of_children), reservations)
-  plot_model(people_and_room_model)
-  summary(people_and_room_model)
-```
-Visually better. (TODO: implement metrics like MSE). 
-
-Our data was taken over a duration, during which hotel prices may have shifted.
-```{r}
-  ggplot(data = reservations, mapping = aes(x = arrival_date_full,
-                                            y = avg_price_per_room,
-                                            col = room_type_reserved)) +
-    geom_point() +
-    geom_smooth(method="lm", formula = y~x)
-```
-
-Price is clearly time-dependent, although the relationship may not strictly speaking
-be linear. Nevertheless, add it to the model.
+After building our linear model for these and other relevant factors,
+we get:
 
 ```{r}
-  model_with_time <- lm(avg_price_per_room ~
-                         (room_type_reserved + no_of_adults + no_of_children + arrival_date_full),
-                        reservations)
-  plot_model(model_with_time)
-  summary(model_with_time)
+  # janky special case for when we are fitting only on 
+  models_final = fit_models(avg_price_per_room ~ 
+                                  (no_of_week_nights +
+                                   no_of_weekend_nights +
+                                   arrival_date_full +
+                                   no_of_children +
+                                   no_of_adults +
+                                   market_segment_type + 
+                                   type_of_meal_plan +
+                                   no_of_special_requests +
+                                   required_car_parking_space +
+                                   lead_time
+                                  ))
+  plot_model(models_final)
+  summaries_final <- lapply(models_final, summary)
+  print(summaries_final)
+```
+
+The fit is better for some room types than others. For room type 3, for example, 
+the fit is perfect:
+
+```{r}
+  plot_model(models_final, subset(reservations, room_type_reserved == "Room_Type 3"))
 ```
 
 ```{r}
-  ggplot(data = reservations,
-        mapping = aes(x = total_nights, y = avg_price_per_room, col = room_type_reserved)) +
-    geom_point() +
-    geom_smooth(method = "lm", formula = y~x)
+table(reservations$room_type_reserved)
 ```
-Matters to some but not much to others.
-
-```{r}
-  model_with_duration <- lm(avg_price_per_room ~
-                         (room_type_reserved +
-                            no_of_adults +
-                            no_of_children +
-                            arrival_date_full +
-                            no_of_week_nights +
-                            no_of_weekend_nights +
-                            market_segment_type + 
-                            type_of_meal_plan + 
-                            no_of_special_requests + 
-                            lead_time +
-                            required_car_parking_space +
-                            no_of_previous_cancellations +
-                            booking_status),
-                        reservations)
-  plot_model(model_with_duration)
-  summary(model_with_duration)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
