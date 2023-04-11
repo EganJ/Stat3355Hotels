@@ -23,35 +23,83 @@ ggplot(data = bookings, mapping = aes(x = reservation_status_date, y = adr, fill
 
 ```
 
+
+Subsetting plots for Reservation set. 
+
+
 ```{r}
 # subset data
 average_price <- mean(reservations$avg_price_per_room)
-lower_price_room <- subset.data.frame(reservations, select = c("arrival_date_full", "total_nights", "booking_status", "avg_price_per_room"))
-index_track <- 0
-j <- 1
- for (i in 1:36275) {
-  if(reservations$avg_price_per_room[i] > average_price){
-    lower_price_room <- lower_price_room[-i,]
-    index_track[j] <- i 
-    j <- j + 1
-    }
+lower_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room"))
+lower_price_room <- filter(lower_price_room, lower_price_room$avg_price_per_room <= average_price)
+
+
+upper_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room", "arrival_date_full")) 
+upper_price_room <- filter(upper_price_room, upper_price_room$avg_price_per_room > average_price)
+
+
+
+```
+
+
+Attempting to find the total of cancellations for each date; however, it was not possible. Thus, the data is now reflecting months. 
+
+
+
+```{r}
+#Find total cancellations per day for each upper and lower prices 
+
+lower_price_room_date <- arrange(lower_price_room, desc(arrival_month))
+total_cancellations_lower <- rep(1, times = 12)
+for(n in 1:12){
+ lower_price_room_filt <- filter(lower_price_room_date, arrival_month == n)
+ for (m in 1:length(lower_price_room_filt$arrival_month)){
+   if(lower_price_room_filt$booking_status[m] == 1){
+     total_cancellations_lower[n] <- total_cancellations_lower[n] + 1
+   }
+ }
 }
-temp_upper_price_room <- subset.data.frame(reservations, select = c("arrival_date_full", "total_nights", "booking_status", "avg_price_per_room")) 
-upper_price_room <- temp_upper_price_room[index_track,]
-```
+lower_price_room_new <- subset(lower_price_room, )
 
-```{r}
-
-#Find total cancellations per date
 
 
 ```
 
+
+
+Plotting Data for Reservations dataset in stacked bar charts. 
+
+
 ```{r}
 
-ggplot(data = lower_price_room, mapping = aes(x = arrival_date_full, y = total_nights, fill = booking_status)) + geom_smooth() + xlab("Date of Stay") + ylab("Total Nights") + scale_fill_manual(values = c("Not_Canceled" = "green", "Canceled" = "red")) + ggtitle(label = "Lower Price Rooms Cancellations")
+ggplot(data = lower_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Month of Stay") + ylab("Total Nights") + ggtitle(label = "Lower Price Rooms Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
 
-ggplot(data = upper_price_room, mapping = aes(x = arrival_date_full, y = total_nights, fill = booking_status)) + geom_smooth() + xlab("Date of Stay") + ylab("Total Nights") + scale_fill_manual(values = c("Not_Canceled" = "green", "Canceled" = "red")) + ggtitle(label = "Upper Price Room's Cancellations")
+ggplot(data = upper_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
+
+ggplot(data = upper_price_room, mapping = aes(x = arrival_date_full, y = total_nights)) + geom_abline(mapping = aes(slope, intercept = 0.5)) + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() 
+
+
+```
+
+```{r}
+
+# subset data
+average_cost <- mean(bookings$adr)
+lower_rooms <- subset.data.frame(bookings, select = c("arrival_date_month", "stays_total_nights", "reservation_status", "adr"))
+lower_rooms <- filter(lower_rooms, lower_rooms$adr <= average_cost)
+
+upper_rooms <- subset.data.frame(bookings, select = c("arrival_date_month", "stays_total_nights", "reservation_status", "adr"))
+upper_rooms <- filter(upper_rooms, upper_rooms$adr > average_cost)
+
+```
+
+Plotting data for Bookings dataset in stacked bars. 
+
+```{r}
+ggplot(data = lower_rooms, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = reservation_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Month of Stay") + ylab("Total Nights") + ggtitle(label = "Lower Price Rooms Cancellations") + theme_bw() + guides(fill = guide_legend(title="Booking Status"))
+
+ggplot(data = upper_rooms, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = reservation_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title="Booking Status"))
+
 
 ```
