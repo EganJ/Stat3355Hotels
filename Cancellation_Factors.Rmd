@@ -77,7 +77,7 @@ ggplot(data = lower_price_room, mapping = aes(x = arrival_month, y = total_night
 
 ggplot(data = upper_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
-ggplot(data = upper_price_room, mapping = aes(x = arrival_date_full, y = total_nights)) + geom_abline(mapping = aes(slope, intercept = 0.5)) + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() 
+ggplot(data = reservations, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
 
 ```
