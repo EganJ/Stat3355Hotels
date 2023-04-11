@@ -138,5 +138,15 @@ get_cleaned_reservations <- function(){
   reservations$total_nights <- reservations$no_of_week_nights + reservations$no_of_weekend_nights
   
   
+  #Cancellation clean up 
+  
+  reservations <- reservations %>% mutate(booking_status = factor(booking_status))
+  
+  
+  # Remove adr outliers 
+  
+  bookings <- bookings[-48512,]
+  bookings <- bookings[-14970,]
+  
   return (reservations)}
 

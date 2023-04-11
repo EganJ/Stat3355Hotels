@@ -1,0 +1,57 @@
+---
+title: "Cancellation Factors"
+output: html_notebook
+---
+
+```{r}
+  source("clean_data.R")
+  bookings <- get_cleaned_bookings()          # Supplementary data set
+  reservations <- get_cleaned_reservations()  # Primary data set
+  
+  reservations$order <- rownames(reservations) # for reconstruction after subsetting
+  library(ggplot2)
+```
+
+
+Here, the data is being plotted for cancellations against the date and price. 
+
+```{r}
+
+#plotting data from cancelled bookings and date
+
+ggplot(data = bookings, mapping = aes(x = reservation_status_date, y = adr, fill = is_canceled)) + geom_smooth(method = "lm", formula = y~x) + xlab("Date of Stay") + ylab("Average Room Price") 
+
+```
+
+```{r}
+# subset data
+average_price <- mean(reservations$avg_price_per_room)
+lower_price_room <- subset.data.frame(reservations, select = c("arrival_date_full", "total_nights", "booking_status", "avg_price_per_room"))
+index_track <- 0
+j <- 1
+ for (i in 1:36275) {
+  if(reservations$avg_price_per_room[i] > average_price){
+    lower_price_room <- lower_price_room[-i,]
+    index_track[j] <- i 
+    j <- j + 1
+    }
+}
+temp_upper_price_room <- subset.data.frame(reservations, select = c("arrival_date_full", "total_nights", "booking_status", "avg_price_per_room")) 
+upper_price_room <- temp_upper_price_room[index_track,]
+```
+
+```{r}
+
+#Find total cancellations per date
+
+
+```
+
+```{r}
+
+ggplot(data = lower_price_room, mapping = aes(x = arrival_date_full, y = total_nights, fill = booking_status)) + geom_smooth() + xlab("Date of Stay") + ylab("Total Nights") + scale_fill_manual(values = c("Not_Canceled" = "green", "Canceled" = "red")) + ggtitle(label = "Lower Price Rooms Cancellations")
+
+
+ggplot(data = upper_price_room, mapping = aes(x = arrival_date_full, y = total_nights, fill = booking_status)) + geom_smooth() + xlab("Date of Stay") + ylab("Total Nights") + scale_fill_manual(values = c("Not_Canceled" = "green", "Canceled" = "red")) + ggtitle(label = "Upper Price Room's Cancellations")
+
+```
