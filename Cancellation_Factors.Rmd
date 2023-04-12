@@ -72,12 +72,12 @@ Plotting Data for Reservations dataset in stacked bar charts.
 
 ```{r}
 
-ggplot(data = lower_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Month of Stay") + ylab("Total Nights") + ggtitle(label = "Lower Price Rooms Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
+ggplot(data = lower_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "fill", stat = "identity") + xlab("Month of Stay") + ylab("Total Nights") + ggtitle(label = "Lower Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
 
-ggplot(data = upper_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
+ggplot(data = upper_price_room, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "fill", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
-ggplot(data = reservations, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
+ggplot(data = reservations, mapping = aes(x = arrival_month, y = total_nights, fill = booking_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Reservation Cancellations With Total Night") + theme_bw() + guides(fill = guide_legend(title = "Reservation Status"))
 
 
 ```
@@ -99,7 +99,7 @@ Plotting data for Bookings dataset in stacked bars.
 ```{r}
 ggplot(data = lower_rooms, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = reservation_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Month of Stay") + ylab("Total Nights") + ggtitle(label = "Lower Price Rooms Cancellations") + theme_bw() + guides(fill = guide_legend(title="Booking Status"))
 
-ggplot(data = upper_rooms, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = reservation_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title="Booking Status"))
+ggplot(data = upper_rooms, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = reservation_status)) + geom_bar(position = "stack", stat = "identity") + xlab("Date of Stay") + ylab("Total Nights") + ggtitle(label = "Upper Price Room's Cancellations") + theme_bw() + guides(fill = guide_legend(title="Booking Status")) 
 
-
+ggplot(data = bookings, mapping = aes(x = previous_cancellations, y = arrival_date_week_number , fill = customer_type)) + geom_tile()
 ```
