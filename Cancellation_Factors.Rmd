@@ -19,7 +19,7 @@ Here, the data is being plotted for cancellations against the date and price.
 
 #plotting data from cancelled bookings and date
 
-ggplot(data = bookings, mapping = aes(x = reservation_status_date, y = adr, fill = is_canceled)) + geom_smooth(method = "lm", formula = y~x) + xlab("Date of Stay") + ylab("Average Room Price") 
+ggplot(data = bookings, mapping = aes(x = arrival_date_month, y = stays_total_nights, fill = is_canceled)) + geom_bar(stat = "identity") + xlab("Date of Stay") + ylab("Total Bookings") 
 
 ```
 
@@ -107,7 +107,7 @@ ggplot(data = reservations,
                      fill = booking_status)) +
   geom_bar(position = "stack", stat = "identity") +
   xlab("Date of Stay") +
-  ylab("Total Nights") +
+  ylab("Total Bookings") +
   ggtitle(label = "Reservation Cancellations With Total Night") +
   theme_bw() +
   guides(fill = guide_legend(title = "Reservation Status"))
@@ -146,38 +146,9 @@ ggplot(data = bookings,
            fill = reservation_status)) + 
   geom_area() +
   xlab("Status Date") +
-  ylab("Total Nights")
-
-```
-
-
-
-Plotting data for Bookings dataset in stacked bars. 
-
-```{r}
-ggplot(data = lower_rooms,
-       mapping = aes(x = arrival_date_month,
-                     y = stays_total_nights,
-                     fill = reservation_status)) +
-  geom_bar(position = "stack", stat = "identity") +
-  xlab("Month of Stay") +
   ylab("Total Nights") +
-  ggtitle(label = "Lower Price Rooms Cancellations") +
-  theme_bw() +
-  guides(fill = guide_legend(title="Booking Status"))
+  theme(legend.key = element)
 
-ggplot(data = upper_rooms,
-       mapping = aes(x = arrival_date_month,
-                     y = stays_total_nights,
-                     fill = reservation_status)) +
-  geom_bar(position = "stack", stat = "identity") +
-  xlab("Date of Stay") + ylab("Total Nights") +
-  ggtitle(label = "Upper Price Room's Cancellations") +
-  theme_bw() + guides(fill = guide_legend(title="Booking Status")) 
 
-ggplot(data = bookings,
-       mapping = aes(x = previous_cancellations,
-                     y = arrival_date_week_number,
-                     fill = customer_type)) +
-  geom_tile()
 ```
+
