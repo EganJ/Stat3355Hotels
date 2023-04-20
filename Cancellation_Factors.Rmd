@@ -137,7 +137,8 @@ ggplot(data = reservations,
        aes(x = arrival_date_full, y = total_rev, fill = booking_status)) +
   geom_area() +
   xlab("Arrival date") +
-  ylab("Total Revenue")
+  ylab("Total Revenue") +
+  ggtitle("Total Revenue Against Cancellations")
 
 
 ggplot(data = bookings,
@@ -146,8 +147,8 @@ ggplot(data = bookings,
            fill = reservation_status)) + 
   geom_area() +
   xlab("Status Date") +
-  ylab("Total Nights") +
-  theme(legend.key = element)
+  ylab("Total Nights") + 
+  ggtitle("Revenue Against Reservations Status")
 
 
 ```
