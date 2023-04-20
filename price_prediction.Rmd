@@ -12,18 +12,29 @@ Load libraries and data
   reservations <- get_cleaned_reservations()  # Primary data set
   
   # Drop room type 3 since only 7 observations
-  reservations <- subset(reservations, reservations$room_type_reserved != "Room_Type 3")
-  reservations <- subset(reservations, reservations$market_segment_type != "Complementary")
+  reservations <- subset(reservations, 
+                         reservations$room_type_reserved != "Room_Type 3")
+  
+  # Drop complementary stays since they would complicate price modeling.
+  reservations <- subset(reservations,
+                         reservations$market_segment_type != "Complementary")
   reservations <- droplevels(reservations)
   
   
-  # Remove outliers on a per-room type basis
+  # Remove outliers on a per-room type basis, using 1.5 IQR rule
   removed_outliers <- data.frame()
   for (room_type in levels(reservations$room_type_reserved)){
     room_data <- subset(reservations, room_type_reserved == room_type)
-    lower = mean(room_data$avg_price_per_room) - 1.5 * IQR(room_data$avg_price_per_room)
-    upper = mean(room_data$avg_price_per_room) + 1.5 * IQR(room_data$avg_price_per_room)
-    room_data <- subset(room_data, avg_price_per_room < upper & avg_price_per_room > lower)
+    
+    # establish allowed interval
+    lower = mean(room_data$avg_price_per_room) - 
+      1.5 * IQR(room_data$avg_price_per_room)
+    upper = mean(room_data$avg_price_per_room) +
+      1.5 * IQR(room_data$avg_price_per_room)
+    
+    room_data <- subset(room_data, 
+                        avg_price_per_room < upper & avg_price_per_room > lower)
+    
     removed_outliers <- rbind(removed_outliers, room_data)
   }
   reservations <- removed_outliers
@@ -38,6 +49,7 @@ Utility functions for model fitting and evaluation
 # Fitting / Predicting split by room type. Implementation is not very r-like
 # but hey, on a schedule.
 
+# Fits a multilinear model per room type based on the given formula
 fit_models <- function(formula, pop = reservations) {
   rooms <- levels(pop$room_type_reserved)
   models <- vector("list", length(rooms))
@@ -50,6 +62,8 @@ fit_models <- function(formula, pop = reservations) {
   return(models)
 }
 
+# Applies the appropriate model (split by room type) and returns a copy of 
+# the data with the predictions as a new column
 make_predictions <- function(models, pop = reservations) {
   predicted_price <- seq_len(nrow(pop))
   predictions <- data.frame()
@@ -62,23 +76,9 @@ make_predictions <- function(models, pop = reservations) {
   return(predictions[order(predictions$order), ])
 }
 
-get_rmses <- function(models, pop = reservations) {
-  rmses <- data.frame(nrow  = 1)
-  pop <- na.omit(make_predictions(models, pop))
-  for(room_type in levels(pop$room_type)){
-    model <- models[[room_type]]
-    data <- subset(pop, room_type_reserved == room_type)
-    mse <- mean((data$predicted_price - data$avg_price_per_room)**2)
-    rmses[, room_type] = sqrt(mse)
-  }
-  overall_mse <- mean((pop$predicted_price - pop$avg_price_per_room)**2)
-  rmses$overall = sqrt(overall_mse)
-  
-  return(rmses)
-}
 ```
 
-
+Evaluation utilities for models
 ```{r}
 # Evaluation utilities for a model
 plot_model <- function(fit_models, pop = reservations) {
@@ -99,12 +99,25 @@ plot_model <- function(fit_models, pop = reservations) {
     theme(aspect.ratio = 1)
 }
 
+# Returns a Root Mean Square Error value for each prediction class
+get_rmses <- function(models, pop = reservations) {
+  rmses <- data.frame(nrow  = 1)
+  pop <- na.omit(make_predictions(models, pop))
+  for(room_type in levels(pop$room_type)){
+    model <- models[[room_type]]
+    data <- subset(pop, room_type_reserved == room_type)
+    mse <- mean((data$predicted_price - data$avg_price_per_room)**2)
+    rmses[, room_type] = sqrt(mse)
+  }
+  overall_mse <- mean((pop$predicted_price - pop$avg_price_per_room)**2)
+  rmses$overall = sqrt(overall_mse)
+  
+  return(rmses)
+}
 ```
 
-In this document we look to build a regression model for the average price. We 
-might suppose that the type of room booked would heavily impact the average price:
 
-
+Visualize the populations
 ```{r}
   ggplot(data = reservations, mapping = aes(x = avg_price_per_room,
                                             y = room_type_reserved,
@@ -118,12 +131,14 @@ might suppose that the type of room booked would heavily impact the average pric
 
 Want a baseline of just predicting the mean for each room type:
 ```{r}
+  # a linear model using only room type will predict the mean for each room class
   rt_model <- lm(avg_price_per_room ~ room_type_reserved, data = reservations)
   summary(rt_model)
   
   rt_rmse <- sqrt(mean((predict(rt_model, reservations) - reservations$avg_price_per_room)**2))
   cat("Overall RMSE", rt_rmse, "\n")
   
+  # get RMSE per room type
   pop <- na.omit(reservations)
   for(room_type in levels(pop$room_type)){
     model <- rt_model
@@ -134,11 +149,7 @@ Want a baseline of just predicting the mean for each room type:
   }
 ```
 
-
-Since the populations look so different we will be fitting a linear model to each
-group independently. This is further justified when we look at the behaviors for
-some of the variables like number of nights stayed:
-
+Plot price by total nights. Did not make it into final report
 ```{r}
   ggplot(data = reservations,
         mapping = aes(x = total_nights, y = avg_price_per_room, col = room_type_reserved)) +
@@ -148,7 +159,8 @@ some of the variables like number of nights stayed:
     ylab("Average Price per Room") + 
     xlab("Total Nights (Weekend + Week)")
 ```
-Alternatly check time dependence:
+
+Instead, check price time dependence:
 ```{r}
   ggplot(data = reservations,
         mapping = aes(x = arrival_date_full, y = avg_price_per_room, col = room_type_reserved)) +
@@ -181,16 +193,12 @@ affect price, with adults and children possibly being priced separately.
   ggplot(data = reservations, mapping = aes(x = no_of_children, y = avg_price_per_room, col = room_type_reserved)) + 
     geom_jitter()
 ```
-We see that this question is not fully independent of asking the room type- for
-instance, children-only reservations use almost exclusively room type 2- but there
-is enough of a shift even accounting for room type to justify adding the number
-of participants to the model.
+Populations are not independent, so add it to the model.
 
 After building our linear model for these and other relevant factors,
 we get:
 
 ```{r}
-  # janky special case for when we are fitting only on 
   models_final = fit_models(avg_price_per_room ~ 
                                   (no_of_week_nights +
                                    no_of_weekend_nights +
@@ -209,6 +217,7 @@ we get:
   print(get_rmses(models_final))
 ```
 
+Need to know number of observations used.
 ```{r}
 table(reservations$room_type_reserved)
 ```
