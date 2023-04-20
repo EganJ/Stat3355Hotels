@@ -134,15 +134,19 @@ Plotting data revenue for cancelled reservations and not cancelled reservations;
 ```{r}
 
 ggplot(data = reservations,
-       aes(x = arrival_date_full, y = total_nights, fill = booking_status)) +
-  geom_area()
+       aes(x = arrival_date_full, y = total_rev, fill = booking_status)) +
+  geom_area() +
+  xlab("Arrival date") +
+  ylab("Total Revenue")
 
 
 ggplot(data = bookings,
        aes(x = reservation_status_date,
            y = stays_total_nights,
            fill = reservation_status)) + 
-  geom_area()
+  geom_area() +
+  xlab("Status Date") +
+  ylab("Total Nights")
 
 ```
 
