@@ -30,11 +30,11 @@ Subsetting plots for Reservation set.
 ```{r}
 # subset data
 average_price <- mean(reservations$avg_price_per_room)
-lower_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room"))
+lower_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room", "total_rev"))
 lower_price_room <- filter(lower_price_room, lower_price_room$avg_price_per_room <= average_price)
 
 
-upper_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room", "arrival_date_full")) 
+upper_price_room <- subset.data.frame(reservations, select = c("arrival_month", "total_nights", "booking_status", "avg_price_per_room", "arrival_date_full", "total_rev")) 
 upper_price_room <- filter(upper_price_room, upper_price_room$avg_price_per_room > average_price)
 
 
@@ -93,6 +93,19 @@ upper_rooms <- subset.data.frame(bookings, select = c("arrival_date_month", "sta
 upper_rooms <- filter(upper_rooms, upper_rooms$adr > average_cost)
 
 ```
+
+Plotting data revenue for cancelled reservations and not cancelled reservations; then, comparing these findings against the reservations and total nights bar graph. 
+
+```{r}
+
+ggplot(data = reservations, aes(x = arrival_date_full, y = total_nights, fill = booking_status)) + geom_area()
+
+
+ggplot(data = bookings, aes(x = reservation_status_date, y = stays_total_nights, fill = reservation_status)) + geom_area()
+
+```
+
+
 
 Plotting data for Bookings dataset in stacked bars. 
 

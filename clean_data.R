@@ -112,6 +112,7 @@ get_cleaned_bookings <- function() {
   # Reservation status date needs to be converted to date, of course
   bookings <- bookings %>% mutate(reservation_status_date = as.Date(reservation_status_date))
   
+  
   # Stays total nights requires no cleaning.
   
   return(bookings)
@@ -141,6 +142,9 @@ get_cleaned_reservations <- function(){
   #Cancellation clean up 
   
   reservations <- reservations %>% mutate(booking_status = factor(booking_status))
+  
+  # create new column persisting of total revenue by multiplying total nights by the adr/ average price per night. 
+  reservations <- reservations %>% mutate(total_rev = total_nights * avg_price_per_room)
   
   
   # Remove adr outliers 
